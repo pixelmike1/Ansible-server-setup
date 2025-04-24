@@ -2,6 +2,13 @@
   hosts: servidores
   become: true
 
+  vars:
+    app_name: flaskapp
+    app_dir: /home/ubuntu/flask-app
+    docker_image: flask-app
+    host_port: 80
+    container_port: 5000
+
   tasks:
     - name: Actualizar paquetes del sistema
       apt:
@@ -20,22 +27,23 @@
 
     - name: Crear carpeta de la app
       file:
-        path: /home/ubuntu/flask-app
+        path: "{{ app_dir }}"
         state: directory
         mode: '0755'
 
     - name: Copiar archivos de la app al servidor
       copy:
         src: app/
-        dest: /home/ubuntu/flask-app
+        dest: "{{ app_dir }}"
         owner: ubuntu
         group: ubuntu
         mode: '0644'
 
     - name: Construir imagen Docker de la app
-      command: docker build -t flask-app /home/ubuntu/flask-app
+      command: docker build -t {{ docker_image }} {{ app_dir }}
 
     - name: Ejecutar contenedor de la app
-      command: docker run -d -p 80:5000 --name flaskapp flask-app
-      ignore_errors: true  # evita fallar si ya existe
+      command: docker run -d -p {{ host_port }}:{{ container_port }} --name {{ app_name }} {{ docker_image }}
+      ignore_errors: true
+
 
